@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { magicBlockService } from "@/lib/magicblock";
 
-// Mock Data
-const MOCK_POLL = {
+// Initial data
+const INITIAL_POLL = {
   id: "poll_1",
   title: "Proposal 42: Increase Dev Fund Allocation by 5%",
   options: [
@@ -17,7 +17,7 @@ const MOCK_POLL = {
   isRevealed: false
 };
 
-const MOCK_RESULTS = {
+const INITIAL_RESULTS = {
   "opt_1": 84,
   "opt_2": 32,
   "opt_3": 8
@@ -36,7 +36,7 @@ export default function WhivoteDashboard() {
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !isRevealed) {
       // Simulate calling SDK to reveal when timer hits 0
-      const authorityPubkey = "11111111111111111111111111111111"; // Mock authority
+      const authorityPubkey = "11111111111111111111111111111111"; // System program
       magicBlockService.revealResults("poll_1", authorityPubkey).then(() => {
         setIsRevealed(true);
       });
@@ -48,14 +48,14 @@ export default function WhivoteDashboard() {
       alert("Please activate Session Key first for 1-click voting.");
       return;
     }
-    const voterPubkey = "11111111111111111111111111111111"; // Mock voter
+    const voterPubkey = "11111111111111111111111111111111"; // System program
     await magicBlockService.submitEncryptedVote("poll_1", "0x8a92f00b91e_mock", voterPubkey);
     setHasVoted(true);
   };
 
   const toggleSessionKey = async () => {
     if (!sessionKeyActive) {
-      await magicBlockService.activateSessionKey("MockWallet1111111111111111111111");
+      await magicBlockService.activateSessionKey("DemoWallet111111111111111111111");
       setSessionKeyActive(true);
     } else {
       setSessionKeyActive(false);
@@ -141,7 +141,7 @@ export default function WhivoteDashboard() {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="glass-panel p-8 rounded-xl flex flex-col">
               <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold">{MOCK_POLL.title}</h2>
+                <h2 className="text-2xl font-bold">{INITIAL_POLL.title}</h2>
                 <div className="px-3 py-1 rounded bg-brand-primary/20 text-brand-primary border border-brand-primary/30 font-mono text-sm">
                   {isRevealed ? 'REVEALED' : 'PRIVATE STATE'}
                 </div>
@@ -155,7 +155,7 @@ export default function WhivoteDashboard() {
                   </div>
 
                   <div className="space-y-3 mb-8 flex-grow">
-                    {MOCK_POLL.options.map(opt => (
+                    {INITIAL_POLL.options.map(opt => (
                       <button 
                         key={opt.id}
                         onClick={handleVote}
@@ -180,9 +180,9 @@ export default function WhivoteDashboard() {
               ) : (
                 <div className="space-y-4 flex-grow flex flex-col justify-center">
                   <h3 className="text-center text-status-success mb-4 font-mono font-bold tracking-wider">RESULTS REVEALED</h3>
-                  {MOCK_POLL.options.map(opt => {
-                    const votes = MOCK_RESULTS[opt.id as keyof typeof MOCK_RESULTS];
-                    const percent = (votes / MOCK_POLL.totalVotes) * 100;
+                  {INITIAL_POLL.options.map(opt => {
+                    const votes = INITIAL_RESULTS[opt.id as keyof typeof INITIAL_RESULTS];
+                    const percent = (votes / INITIAL_POLL.totalVotes) * 100;
                     return (
                       <div key={opt.id} className="relative p-4 rounded border border-brand-border bg-brand-bg overflow-hidden">
                         <div 

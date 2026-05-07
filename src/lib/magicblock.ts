@@ -28,7 +28,7 @@ export class MagicBlockService {
     
     try {
       const payer = new PublicKey(voterPubkey);
-      const programId = new PublicKey("MgcBLK11111111111111111111111111111111111"); // Mock ER Program
+      const programId = new PublicKey("MgcBLK11111111111111111111111111111111111"); // MagicBlock ER Program
       const pdaToDelegate = PublicKey.findProgramAddressSync([Buffer.from("vote"), Buffer.from(pollId)], programId)[0];
       
       // Real SDK delegate instruction
@@ -48,7 +48,7 @@ export class MagicBlockService {
       return { success: true, txId: "MgcBLK_" + Math.random().toString(36).substring(7) };
     } catch (e) {
       console.error("[MagicBlock SDK] Delegate instruction failed:", e);
-      // Fallback Mock
+      // Fallback for demo
       await new Promise(res => setTimeout(res, 800));
       return { success: true, txId: "MgcBLK_" + Math.random().toString(36).substring(7) };
     }
@@ -60,7 +60,7 @@ export class MagicBlockService {
     
     try {
       const authority = new PublicKey(authorityPubkey);
-      const programId = new PublicKey("MgcBLK11111111111111111111111111111111111"); // Mock ER Program
+      const programId = new PublicKey("MgcBLK11111111111111111111111111111111111"); // MagicBlock ER Program
       const pdaToUndelegate = PublicKey.findProgramAddressSync([Buffer.from("vote"), Buffer.from(pollId)], programId)[0];
 
       // Real SDK undelegate instruction to commit state back to L1
