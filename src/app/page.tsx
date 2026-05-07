@@ -1,5 +1,8 @@
 "use client";
 
+import { StatusBar } from "@/components/StatusBar";
+import { Footer } from "@/components/Footer";
+
 import { useState, useEffect } from "react";
 import { magicBlockService } from "@/lib/magicblock";
 
@@ -63,6 +66,8 @@ export default function WhivoteDashboard() {
   };
 
   const renderExplorerProof = () => (
+    <>
+      <StatusBar />
     <div className="p-4 rounded-lg bg-brand-surface border border-brand-border font-mono text-xs text-brand-muted space-y-2 h-full">
       <div className="flex justify-between items-center pb-2 border-b border-brand-border">
         <span className="text-white font-bold">SOLANA EXPLORER</span>
@@ -209,5 +214,7 @@ export default function WhivoteDashboard() {
         )}
       </main>
     </div>
+      <Footer />
+    </>
   );
 }
