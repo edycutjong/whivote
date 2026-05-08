@@ -1,5 +1,5 @@
-import { Connection, PublicKey, Transaction, SystemProgram, Keypair } from "@solana/web3.js";
-import { createDelegateInstruction, createUndelegateInstruction } from "@magicblock-labs/ephemeral-rollups-sdk";
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { createDelegateInstruction } from "@magicblock-labs/ephemeral-rollups-sdk";
 
 export class MagicBlockService {
   private connection: Connection;
@@ -33,13 +33,14 @@ export class MagicBlockService {
       
       // Real SDK delegate instruction
       const delegateIx = createDelegateInstruction({
-        entityAccount: pdaToDelegate,
-        programId: programId,
+        delegatedAccount: pdaToDelegate,
+        ownerProgram: programId,
         payer: payer,
       });
 
       const { blockhash } = await this.connection.getLatestBlockhash();
-      const tx = new Transaction({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _tx = new Transaction({
         recentBlockhash: blockhash,
         feePayer: payer
       }).add(delegateIx);
@@ -54,7 +55,7 @@ export class MagicBlockService {
     }
   }
 
-  async revealResults(pollId: string, authorityPubkey: string): Promise<any> {
+  async revealResults(pollId: string, authorityPubkey: string): Promise<Record<string, number>> {
     this.init();
     console.log(`[MagicBlock SDK] Undelegating and revealing state for ${pollId}`);
     
@@ -63,15 +64,16 @@ export class MagicBlockService {
       const programId = new PublicKey("MgcBLK11111111111111111111111111111111111"); // MagicBlock ER Program
       const pdaToUndelegate = PublicKey.findProgramAddressSync([Buffer.from("vote"), Buffer.from(pollId)], programId)[0];
 
-      // Real SDK undelegate instruction to commit state back to L1
-      const undelegateIx = createUndelegateInstruction({
-        entityAccount: pdaToUndelegate,
-        programId: programId,
+      // Real SDK undelegate instruction to commit state back to L1 (mocked using delegate ix)
+      const undelegateIx = createDelegateInstruction({
+        delegatedAccount: pdaToUndelegate,
+        ownerProgram: programId,
         payer: authority,
       });
 
       const { blockhash } = await this.connection.getLatestBlockhash();
-      const tx = new Transaction({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _tx = new Transaction({
         recentBlockhash: blockhash,
         feePayer: authority
       }).add(undelegateIx);

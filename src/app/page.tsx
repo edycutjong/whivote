@@ -27,10 +27,11 @@ const INITIAL_RESULTS = {
 };
 
 export default function WhivoteDashboard() {
-  const [view, setView] = useState<'polls' | 'create' | 'reveal'>('polls');
+  const [view, setView] = useState<'landing' | 'polls' | 'create' | 'reveal'>('landing');
   const [timeLeft, setTimeLeft] = useState(30);
   const [hasVoted, setHasVoted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [results, setResults] = useState<Record<string, number> | null>(null);
   const [sessionKeyActive, setSessionKeyActive] = useState(false);
 
   useEffect(() => {
@@ -40,7 +41,8 @@ export default function WhivoteDashboard() {
     } else if (timeLeft === 0 && !isRevealed) {
       // Simulate calling SDK to reveal when timer hits 0
       const authorityPubkey = "11111111111111111111111111111111"; // System program
-      magicBlockService.revealResults("poll_1", authorityPubkey).then(() => {
+      magicBlockService.revealResults("poll_1", authorityPubkey).then((res) => {
+        setResults(res);
         setIsRevealed(true);
       });
     }
@@ -89,11 +91,13 @@ export default function WhivoteDashboard() {
         </div>
       )}
     </div>
+    </>
   );
 
   return (
-    <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
-      <header className="flex justify-between items-center pb-6 border-b border-brand-border">
+    <>
+      <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-8">
+        <header className="flex justify-between items-center pb-6 border-b border-brand-border animate-fade-in">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
             <span className="text-brand-primary">W</span>hivote
@@ -121,8 +125,31 @@ export default function WhivoteDashboard() {
       </header>
 
       <main>
+        {view === 'landing' && (
+          <div className="flex flex-col items-center justify-center text-center space-y-8 py-20 animate-fade-in min-h-[70vh]">
+            <div className="relative">
+              <div className="absolute inset-0 bg-brand-primary/20 blur-[100px] rounded-full animate-pulse-glow"></div>
+              <h2 className="relative text-6xl md:text-8xl font-bold tracking-tighter text-white animate-slide-up">
+                Private DAO Voting.<br/>
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-brand-primary to-blue-400">Encrypted.</span>
+              </h2>
+            </div>
+            <p className="text-xl text-brand-muted max-w-2xl animate-slide-up delay-200">
+              Eliminate bandwagon effects and strategic manipulation. Powered by MagicBlock Ephemeral Rollups and Private State.
+            </p>
+            <div className="pt-8 animate-slide-up delay-400">
+              <button 
+                onClick={() => setView('polls')}
+                className="px-8 py-4 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:shadow-[0_0_50px_rgba(168,85,247,0.6)] transition-all transform hover:scale-105 animate-float"
+              >
+                Launch App
+              </button>
+            </div>
+          </div>
+        )}
+
         {view === 'create' && (
-          <div className="glass-panel p-8 rounded-xl max-w-2xl mx-auto">
+          <div className="glass-panel p-8 rounded-xl max-w-2xl mx-auto animate-slide-up">
             <h2 className="text-2xl font-bold mb-6">Create Private Poll</h2>
             <div className="space-y-4">
               <div>
@@ -144,7 +171,7 @@ export default function WhivoteDashboard() {
 
         {view === 'polls' && (
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="glass-panel p-8 rounded-xl flex flex-col">
+            <div className="glass-panel p-8 rounded-xl flex flex-col animate-slide-up">
               <div className="flex justify-between items-start mb-6">
                 <h2 className="text-2xl font-bold">{INITIAL_POLL.title}</h2>
                 <div className="px-3 py-1 rounded bg-brand-primary/20 text-brand-primary border border-brand-primary/30 font-mono text-sm">
@@ -156,10 +183,10 @@ export default function WhivoteDashboard() {
                 <>
                   <div className="text-center p-6 bg-brand-surface/50 rounded-lg border border-brand-border mb-6">
                     <div className="text-brand-muted text-sm uppercase tracking-widest mb-2">Ceremony Countdown</div>
-                    <div className="text-4xl font-mono font-light text-white">00:00:{timeLeft.toString().padStart(2, '0')}</div>
+                    <div className={`text-4xl font-mono font-light text-white transition-colors duration-500 ${timeLeft <= 5 ? 'text-status-error animate-pulse' : ''}`}>00:00:{timeLeft.toString().padStart(2, '0')}</div>
                   </div>
 
-                  <div className="space-y-3 mb-8 flex-grow">
+                  <div className="space-y-3 mb-8 grow">
                     {INITIAL_POLL.options.map(opt => (
                       <button 
                         key={opt.id}
@@ -183,15 +210,15 @@ export default function WhivoteDashboard() {
                   )}
                 </>
               ) : (
-                <div className="space-y-4 flex-grow flex flex-col justify-center">
-                  <h3 className="text-center text-status-success mb-4 font-mono font-bold tracking-wider">RESULTS REVEALED</h3>
-                  {INITIAL_POLL.options.map(opt => {
-                    const votes = INITIAL_RESULTS[opt.id as keyof typeof INITIAL_RESULTS];
+                <div className="space-y-4 grow flex flex-col justify-center animate-fade-in">
+                  <h3 className="text-center text-status-success mb-4 font-mono font-bold tracking-wider animate-pulse">RESULTS REVEALED</h3>
+                  {INITIAL_POLL.options.map((opt, i) => {
+                    const votes = results ? results[opt.id as keyof typeof INITIAL_RESULTS] || 0 : 0;
                     const percent = (votes / INITIAL_POLL.totalVotes) * 100;
                     return (
-                      <div key={opt.id} className="relative p-4 rounded border border-brand-border bg-brand-bg overflow-hidden">
+                      <div key={opt.id} className="relative p-4 rounded border border-brand-border bg-brand-bg overflow-hidden animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
                         <div 
-                          className="absolute inset-y-0 left-0 bg-brand-primary/20"
+                          className="absolute inset-y-0 left-0 bg-brand-primary/20 animate-fill-bar"
                           style={{ width: `${percent}%` }}
                         ></div>
                         <div className="relative flex justify-between items-center z-10">
@@ -206,14 +233,14 @@ export default function WhivoteDashboard() {
             </div>
 
             {/* Split Screen Explorer Proof */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 animate-slide-up delay-200">
               <h3 className="text-sm font-bold uppercase tracking-widest text-brand-muted">On-Chain Verification</h3>
               {renderExplorerProof()}
             </div>
           </div>
         )}
       </main>
-    </div>
+      </div>
       <Footer />
     </>
   );
