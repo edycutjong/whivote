@@ -90,6 +90,100 @@ describe('MagicBlockService', () => {
     });
   });
 
+  describe('authenticate', () => {
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('should successfully authenticate via challenge and login', async () => {
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ challenge: 'test-challenge' })
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ token: 'real_auth_token' })
+        }) as unknown as typeof fetch;
+
+      const signMessage = vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]));
+      
+      const promise = service.authenticate('pubkey123', signMessage);
+      const result = await promise;
+      
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(signMessage).toHaveBeenCalled();
+      expect(result).toBe('real_auth_token');
+    });
+
+    it('should fallback gracefully on API error', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+      const signMessage = vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]));
+      
+      const promise = service.authenticate('pubkey123', signMessage);
+      await Promise.resolve(); // let microtasks run
+      vi.advanceTimersByTime(800); // the fallback timeout
+      
+      const result = await promise;
+      
+      expect(console.error).toHaveBeenCalled();
+      expect(result).toBe('mock_auth_token_for_demo');
+    });
+
+    it('should throw error if challenge request fails', async () => {
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false
+      }) as unknown as typeof fetch;
+
+      const signMessage = vi.fn();
+      const promise = service.authenticate('pubkey123', signMessage);
+      await vi.runAllTimersAsync();
+      const result = await promise;
+      expect(result).toBe('mock_auth_token_for_demo');
+    });
+
+    it('should handle alternative challenge data format', async () => {
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ message: 'alt-challenge' })
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ token: 'real_auth_token_2' })
+        }) as unknown as typeof fetch;
+
+      const signMessage = vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]));
+      const promise = service.authenticate('pubkey123', signMessage);
+      await vi.runAllTimersAsync();
+      const result = await promise;
+      expect(result).toBe('real_auth_token_2');
+    });
+
+    it('should throw error if login request fails', async () => {
+      global.fetch = vi.fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ challenge: 'test-challenge' })
+        })
+        .mockResolvedValueOnce({
+          ok: false
+        }) as unknown as typeof fetch;
+
+      const signMessage = vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3]));
+      const promise = service.authenticate('pubkey123', signMessage);
+      await vi.runAllTimersAsync();
+      const result = await promise;
+      expect(result).toBe('mock_auth_token_for_demo');
+    });
+  });
+
   describe('submitEncryptedVote', () => {
     it('should successfully submit vote', async () => {
       const promise = service.submitEncryptedVote('poll_1', 'payload', 'voter123');

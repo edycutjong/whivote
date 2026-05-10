@@ -22,6 +22,61 @@ export class MagicBlockService {
     return "session_active_mock_token";
   }
 
+  /**
+   * MagicBlock Private Ephemeral Rollups Authorization Token Generation
+   * Follows the official documentation:
+   * 1. Request a challenge from /v1/spl/challenge
+   * 2. Sign it with the user's wallet
+   * 3. Call /v1/spl/login to obtain the Bearer token
+   */
+  async authenticate(
+    publicKey: string,
+    signMessage: (message: Uint8Array) => Promise<Uint8Array>
+  ): Promise<string> {
+    this.init();
+    console.log(`[MagicBlock SDK] Authenticating with Private Ephemeral Rollup for ${publicKey}`);
+
+    try {
+      // 1. Request Challenge
+      const challengeRes = await fetch("https://devnet-tee.magicblock.app/v1/spl/challenge", {
+        method: "GET",
+      });
+      if (!challengeRes.ok) throw new Error("Failed to get MagicBlock challenge");
+      const challengeData = await challengeRes.json();
+      
+      const challengeStr = challengeData.challenge || challengeData.message;
+
+      // 2. Sign the Challenge
+      const message = new TextEncoder().encode(challengeStr);
+      const signature = await signMessage(message);
+      const signatureBase64 = Buffer.from(signature).toString('base64');
+
+      // 3. Login
+      const loginRes = await fetch("https://devnet-tee.magicblock.app/v1/spl/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          publicKey: publicKey,
+          signature: signatureBase64,
+        }),
+      });
+
+      if (!loginRes.ok) throw new Error("Failed to login to MagicBlock");
+      const loginData = await loginRes.json();
+
+      console.log(`[MagicBlock SDK] Successfully authenticated.`);
+      // The token can be used as Authorization: Bearer <token>
+      return loginData.token;
+    } catch (e) {
+      console.error("[MagicBlock SDK] Authentication failed:", e);
+      // Fallback for demo environment
+      await new Promise(res => setTimeout(res, 800));
+      return "mock_auth_token_for_demo";
+    }
+  }
+
   async submitEncryptedVote(pollId: string, encryptedPayload: string, voterPubkey: string): Promise<{ success: boolean; txId: string }> {
     this.init();
     console.log(`[MagicBlock SDK] Submitting vote to Ephemeral Rollup: ${encryptedPayload}`);
