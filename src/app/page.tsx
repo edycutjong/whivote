@@ -20,25 +20,32 @@ const INITIAL_POLL = {
   isRevealed: false
 };
 
-const INITIAL_RESULTS = {
-  "opt_1": 84,
-  "opt_2": 32,
-  "opt_3": 8
-};
-
 export default function WhivoteDashboard() {
   const [view, setView] = useState<'landing' | 'polls' | 'create' | 'reveal'>('landing');
   const [timeLeft, setTimeLeft] = useState(30);
   const [hasVoted, setHasVoted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [results, setResults] = useState<Record<string, number> | null>(null);
+  type ResultsRecord = Record<string, number>;
+  const [results, setResults] = useState<ResultsRecord | null>(null);
   const [sessionKeyActive, setSessionKeyActive] = useState(false);
 
   useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !isRevealed) {
+    if (view === 'polls') {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [view]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && !isRevealed && view === 'polls') {
       // Simulate calling SDK to reveal when timer hits 0
       const authorityPubkey = "11111111111111111111111111111111"; // System program
       magicBlockService.revealResults("poll_1", authorityPubkey).then((res) => {
@@ -46,7 +53,7 @@ export default function WhivoteDashboard() {
         setIsRevealed(true);
       });
     }
-  }, [timeLeft, isRevealed]);
+  }, [timeLeft, isRevealed, view]);
 
   const handleVote = async () => {
     if (!sessionKeyActive) {
@@ -191,7 +198,7 @@ export default function WhivoteDashboard() {
                       <button 
                         key={opt.id}
                         onClick={handleVote}
-                        disabled={hasVoted || !sessionKeyActive}
+                        disabled={hasVoted}
                         className={`w-full p-4 rounded border text-left transition-all ${
                           hasVoted 
                             ? 'bg-brand-surface/50 border-brand-border text-brand-muted cursor-not-allowed opacity-50'
@@ -213,7 +220,7 @@ export default function WhivoteDashboard() {
                 <div className="space-y-4 grow flex flex-col justify-center animate-fade-in">
                   <h3 className="text-center text-status-success mb-4 font-mono font-bold tracking-wider animate-pulse">RESULTS REVEALED</h3>
                   {INITIAL_POLL.options.map((opt, i) => {
-                    const votes = results ? results[opt.id as keyof typeof INITIAL_RESULTS] || 0 : 0;
+                    const votes = results ? results[opt.id] || 0 : 0;
                     const percent = (votes / INITIAL_POLL.totalVotes) * 100;
                     return (
                       <div key={opt.id} className="relative p-4 rounded border border-brand-border bg-brand-bg overflow-hidden animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
