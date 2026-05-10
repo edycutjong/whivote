@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import WhivoteDashboard from './page';
 import { magicBlockService } from '@/lib/magicblock';
 
@@ -139,5 +139,55 @@ describe('WhivoteDashboard (Main Page)', () => {
     });
     
     expect(screen.getByText('RESULTS REVEALED')).toBeInTheDocument();
+  });
+
+  it('should handle missing result data gracefully', async () => {
+    (magicBlockService.revealResults as Mock).mockResolvedValueOnce({
+      opt_1: 85
+      // opt_2 and opt_3 missing
+    });
+
+    render(<WhivoteDashboard />);
+    fireEvent.click(screen.getByText('Launch App'));
+    
+    await act(async () => {
+      vi.advanceTimersByTime(30000);
+    });
+    vi.useRealTimers();
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    
+    expect(screen.getByText('RESULTS REVEALED')).toBeInTheDocument();
+    
+    // opt_1 has 85 votes => 85 / 124 * 100 = 68.5%
+    expect(screen.getByText('85 votes (68.5%)')).toBeInTheDocument();
+    
+    // opt_2 and opt_3 have 0 votes due to fallback
+    const zeroVotes = screen.getAllByText('0 votes (0.0%)');
+    expect(zeroVotes.length).toBe(2);
+  });
+
+  it('should handle null result data gracefully', async () => {
+    (magicBlockService.revealResults as Mock).mockResolvedValueOnce(null);
+
+    render(<WhivoteDashboard />);
+    fireEvent.click(screen.getByText('Launch App'));
+    
+    await act(async () => {
+      vi.advanceTimersByTime(30000);
+    });
+    vi.useRealTimers();
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    
+    expect(screen.getByText('RESULTS REVEALED')).toBeInTheDocument();
+    
+    // all options should fallback to 0 votes
+    const zeroVotes = screen.getAllByText('0 votes (0.0%)');
+    expect(zeroVotes.length).toBe(3);
   });
 });
