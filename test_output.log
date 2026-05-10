@@ -1,0 +1,44 @@
+
+> whivote@0.1.0 ci
+> npm run lint && npm run typecheck && npm run test:coverage
+
+
+> whivote@0.1.0 lint
+> eslint .
+
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-magicblock/coverage/block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+/Users/edycu/Projects/Hackathon/Frontier/frontier-magicblock/src/app/page.tsx
+  23:7  warning  'INITIAL_RESULTS' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (0 errors, 2 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+
+> whivote@0.1.0 typecheck
+> tsc --noEmit
+
+
+> whivote@0.1.0 test:coverage
+> vitest run --coverage
+
+
+ RUN  v4.1.5 /Users/edycu/Projects/Hackathon/Frontier/frontier-magicblock
+      Coverage enabled with v8
+
+ ✓ src/lib/magicblock.test.ts (8 tests) 8ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  08:01:30
+   Duration  820ms (transform 34ms, setup 0ms, import 49ms, tests 8ms, environment 613ms)
+
+ % Coverage report from v8
+---------------|---------|----------|---------|---------|-------------------
+File           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+---------------|---------|----------|---------|---------|-------------------
+All files      |     100 |      100 |     100 |     100 |                   
+ magicblock.ts |     100 |      100 |     100 |     100 |                   
+---------------|---------|----------|---------|---------|-------------------
